@@ -3,9 +3,7 @@ use std::{env, error::Error, fs, process};
 use minigrep::{search, search_case_insensitive};
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-
-    let config = Config::builds(&args).unwrap_or_else(|err| {
+    let config = Config::builds(env::args()).unwrap_or_else(|err| {
         eprintln!("Masalah ketika memparsing argumen: {err}");
         process::exit(1);
     });
@@ -23,13 +21,17 @@ pub struct Config {
 }
 
 impl Config {
-    fn builds(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("argumen tidak mencukupi");
-        }
+    fn builds(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        args.next();
 
-        let query = args[1].clone();
-        let file_path = args[2].clone();
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Tidak ada argumen untuk query"),
+        };
+        let file_path = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Tidak ada argumen untuk file path"),
+        };
 
         let ignore_case = env::var("IGNORE_CASE").is_ok();
 
